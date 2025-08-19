@@ -1,0 +1,104 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
+
+#define SIZE 100
+
+// Stack for characters (operators)
+char opStack[SIZE];
+int top = -1;
+
+// Stack for operands (numbers)
+int numStack[SIZE];
+int numTop = -1;
+
+// Stack operations
+void push(char c) { opStack[++top] = c; }
+char pop() { return opStack[top--]; }
+char peek() { return opStack[top]; }
+int isEmpty() { return top == -1; }
+
+void pushNum(int n) { numStack[++numTop] = n; }
+int popNum() { return numStack[numTop--]; }
+
+// Precedence function
+int precedence(char op) {
+    if (op == '+' || op == '-') return 1;
+    if (op == '*' || op == '/') return 2;
+    return 0;
+}
+
+// Check if operator
+int isOperator(char c) {
+    return c == '+' || c == '-' || c == '*' || c == '/';
+}
+
+// Convert infix to postfix
+void infixToPostfix(char* infix, char* postfix) {
+    int i = 0, j = 0;
+    char c;
+
+    while ((c = infix[i++]) != '\0') {
+        if (isdigit(c)) {
+            postfix[j++] = c;
+        }
+        else if (c == '(') {
+            push(c);
+        }
+        else if (c == ')') {
+            while (!isEmpty() && peek() != '(') {
+                postfix[j++] = pop();
+            }
+            pop(); // remove '('
+        }
+        else if (isOperator(c)) {
+            while (!isEmpty() && precedence(peek()) >= precedence(c)) {
+                postfix[j++] = pop();
+            }
+            push(c);
+        }
+    }
+
+    while (!isEmpty()) {
+        postfix[j++] = pop();
+    }
+
+    postfix[j] = '\0';
+}
+
+// Evaluate postfix expression
+int evaluatePostfix(char* postfix) {
+    int i = 0;
+    char c;
+    while ((c = postfix[i++]) != '\0') {
+        if (isdigit(c)) {
+            pushNum(c - '0');
+        }
+        else {
+            int b = popNum();
+            int a = popNum();
+            switch (c) {
+                case '+': pushNum(a + b); break;
+                case '-': pushNum(a - b); break;
+                case '*': pushNum(a * b); break;
+                case '/': pushNum(a / b); break;
+            }
+        }
+    }
+    return popNum();
+}
+
+int main() {
+    char infix[SIZE], postfix[SIZE];
+    printf("Enter Infix Expression (digits only, e.g., 3+(2*4)):\n> ");
+    scanf("%s", infix);
+
+    infixToPostfix(infix, postfix);
+    printf("\nPostfix: %s\n", postfix);
+
+    int result = evaluatePostfix(postfix);
+    printf("Result: %d\n", result);
+
+    return 0;
+}
