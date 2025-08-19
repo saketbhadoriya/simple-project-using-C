@@ -1,0 +1,142 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+typedef struct Book {
+    char title[50], author[50];
+    int isBorrowed;
+    struct Book* next;
+} Book;
+
+typedef struct Action {
+    char type[10]; // "borrow" or "return"
+    char title[50];
+    struct Action* next;
+} Action;
+
+Book* library = NULL;
+Action* undoStack = NULL;
+
+Book* findBook(char* title) {
+    for (Book* b = library; b; b = b->next)
+        if (strcmp(b->title, title) == 0)
+            return b;
+    return NULL;
+}
+
+void pushUndo(char* type, char* title) {
+    Action* a = malloc(sizeof(Action));
+    strcpy(a->type, type);
+    strcpy(a->title, title);
+    a->next = undoStack;
+    undoStack = a;
+}
+
+void addBook() {
+    Book* b = malloc(sizeof(Book));
+    printf("\nEnter Title: ");
+    scanf(" %[^\n]", b->title);
+    printf("Enter Author: ");
+    scanf(" %[^\n]", b->author);
+    b->isBorrowed = 0;
+    b->next = library;
+    library = b;
+    printf("Book added successfully.\n");
+}
+
+void displayBooks() {
+    printf("\n--- Book List ---\n");
+    if (!library) {
+        printf("No books in library.\n");
+        return;
+    }
+    for (Book* b = library; b; b = b->next)
+        printf("Title: %s\nAuthor: %s\nStatus: %s\n\n", b->title, b->author, b->isBorrowed ? "Borrowed" : "Available");
+}
+
+void borrowBook() {
+    char title[50];
+    printf("\nEnter title to borrow: ");
+    scanf(" %[^\n]", title);
+    Book* b = findBook(title);
+    if (b && !b->isBorrowed) {
+        b->isBorrowed = 1;
+        pushUndo("borrow", b->title);
+        printf("Book borrowed successfully.\n");
+    } else {
+        printf("Book not found or already borrowed.\n");
+    }
+}
+
+void returnBook() {
+    char title[50];
+    printf("\nEnter title to return: ");
+    scanf(" %[^\n]", title);
+    Book* b = findBook(title);
+    if (b && b->isBorrowed) {
+        b->isBorrowed = 0;
+        pushUndo("return", b->title);
+        printf("Book returned successfully.\n");
+    } else {
+        printf("Book not found or not borrowed.\n");
+    }
+}
+
+void undo() {
+    if (!undoStack) {
+        printf("\nNo action to undo.\n");
+        return;
+    }
+    Action* a = undoStack;
+    Book* b = findBook(a->title);
+    if (b) {
+        if (strcmp(a->type, "borrow") == 0) b->isBorrowed = 0;
+        else if (strcmp(a->type, "return") == 0) b->isBorrowed = 1;
+        printf("\nUndo successful: %s '%s'\n", a->type, a->title);
+    }
+    undoStack = a->next;
+    free(a);
+}
+
+void search() {
+    char key[50];
+    printf("\nEnter title or author to search: ");
+    scanf(" %[^\n]", key);
+    int found = 0;
+    for (Book* b = library; b; b = b->next) {
+        if (strstr(b->title, key) || strstr(b->author, key)) {
+            printf("\nTitle: %s\nAuthor: %s\nStatus: %s\n", b->title, b->author, b->isBorrowed ? "Borrowed" : "Available");
+            found = 1;
+        }
+    }
+    if (!found)
+        printf("No matching book found.\n");
+}
+
+int main() {
+    int ch;
+    do {
+        printf("\n==== E-Library Menu ====\n");
+        printf("1. Add Book\n");
+        printf("2. Display Books\n");
+        printf("3. Borrow Book\n");
+        printf("4. Return Book\n");
+        printf("5. Search Book\n");
+        printf("6. Undo Last Action\n");
+        printf("7. Exit\n");
+        printf("Enter your choice: ");
+        scanf("%d", &ch);
+
+        switch (ch) {
+            case 1: addBook(); break;
+            case 2: displayBooks(); break;
+            case 3: borrowBook(); break;
+            case 4: returnBook(); break;
+            case 5: search(); break;
+            case 6: undo(); break;
+            case 7: printf("\nExiting program.\n"); break;
+            default: printf("Invalid choice.\n");
+        }
+    } while (ch != 7);
+    return 0;
+}
