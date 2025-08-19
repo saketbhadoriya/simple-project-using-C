@@ -1,0 +1,96 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#define MAX_CAPACITY 20 
+typedef struct Car {
+    char plate[20];
+    struct Car* next;
+} Car;
+Car* head = NULL;
+int currentCount = 0;
+void parkCar(char* plate) {
+    if (currentCount >= MAX_CAPACITY) {
+        printf("🚫 Parking Lot Full! Cannot park car %s\n", plate);
+        return;
+    }
+
+    Car* newCar = (Car*)malloc(sizeof(Car));
+    strcpy(newCar->plate, plate);
+    newCar->next = head;
+    head = newCar;
+    currentCount++;
+
+    printf("✅ Car %s parked successfully.\n", plate);
+}
+void removeCar(char* plate) {
+    Car *temp = head, *prev = NULL;
+
+    while (temp != NULL) {
+        if (strcmp(temp->plate, plate) == 0) {
+            if (prev == NULL) head = temp->next;
+            else prev->next = temp->next;
+            free(temp);
+            currentCount--;
+            printf("✅ Car %s exited the parking lot.\n", plate);
+            return;
+        }
+        prev = temp;
+        temp = temp->next;
+    }
+
+    printf("❌ Car %s not found in the parking lot.\n", plate);
+}
+void displayCars() {
+    Car* temp = head;
+    printf("\n🚗 Parked Cars:\n");
+    if (temp == NULL) {
+        printf("No cars parked currently.\n");
+    } else {
+        while (temp != NULL) {
+            printf("- %s\n", temp->plate);
+            temp = temp->next;
+        }
+    }
+    printf("Total: %d/%d\n\n", currentCount, MAX_CAPACITY);
+}
+
+// Main menu
+int main() {
+    int choice;
+    char plate[20];
+
+    while (1) {
+        printf("\n=== Smart Parking Lot Menu ===\n");
+        printf("1. Park a Car\n");
+        printf("2. Remove a Car\n");
+        printf("3. Display Parked Cars\n");
+        printf("4. Exit\n");
+        printf("Choose an option: ");
+        scanf("%d", &choice);
+        getchar(); // clear newline from input buffer
+
+        switch (choice) {
+            case 1:
+                printf("Enter Car Plate Number: ");
+                fgets(plate, sizeof(plate), stdin);
+                plate[strcspn(plate, "\n")] = '\0';  // remove newline
+                parkCar(plate);
+                break;
+            case 2:
+                printf("Enter Car Plate Number to Remove: ");
+                fgets(plate, sizeof(plate), stdin);
+                plate[strcspn(plate, "\n")] = '\0';
+                removeCar(plate);
+                break;
+            case 3:
+                displayCars();
+                break;
+            case 4:
+                printf("Exiting Smart Parking System. Goodbye!\n");
+                return 0;
+            default:
+                printf("Invalid option. Please try again.\n");
+        }
+    }
+}
